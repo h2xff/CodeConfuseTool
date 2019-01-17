@@ -7,6 +7,7 @@
 #include <iterator>
 #include <regex>
 #include <string>
+#include <QMutex>
 #include "classmodel.h"
 
 using namespace std;

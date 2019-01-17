@@ -4,7 +4,6 @@
 
 CppParser::CppParser()
 {
-    classname = "";
 }
 
 int CppParser::parseCppFile(SrcFileModel srcFile)
@@ -55,12 +54,12 @@ int CppParser::parseCppFile(SrcFileModel srcFile)
             //has_class_declare为false的时候，表示虽然是cpp文件，但是cpp文件中不包含class类声明
             //GlobalClassDeclare这个类是默认用于添加形如"class A;"的类声明语句，不是真实类名
             bool has_class_declare = false;
-            for(vector<CppParser>::iterator b = _classes.begin(); b!=_classes.end(); ++b)
+            for(vector<CppParser>::iterator b = classes_.begin(); b!=classes_.end(); ++b)
             {
-                if (trim(b->classname).length() > 0 && !stringUtil.EndWith(b->classname, "GlobalClassDeclare"))
+                if (trim(b->classname_).length() > 0 && !stringUtil.EndWith(b->classname_, "GlobalClassDeclare"))
                 {
                     has_class_declare = true;
-                    while(findFunctionAndVarsOfClass(str_cpp, b->classname,pos, *b)){}//连续读取代码中的类
+                    while(findFunctionAndVarsOfClass(str_cpp, b->classname_,pos, *b)){}//连续读取代码中的类
                 }
             }
             if (!has_class_declare)
@@ -111,12 +110,12 @@ int CppParser::parseCppFile(SrcFileModel srcFile)
             //has_class_declare为false的时候，表示虽然是cpp文件，但是cpp文件中不包含class类声明
             //GlobalClassDeclare这个类是默认用于添加形如"class A;"的类声明语句，不是真实类名
             bool has_class_declare = false;
-            for(vector<CppParser>::iterator b = _classes.begin(); b!=_classes.end(); ++b)
+            for(vector<CppParser>::iterator b = classes_.begin(); b!=classes_.end(); ++b)
             {
-                if (trim(b->classname).length() > 0 && !stringUtil.EndWith(b->classname, "GlobalClassDeclare"))
+                if (trim(b->classname_).length() > 0 && !stringUtil.EndWith(b->classname_, "GlobalClassDeclare"))
                 {
                     has_class_declare = true;
-                    while(findFunctionAndVarsOfClass(str_cpp, b->classname,pos, *b)){}//连续读取代码中的类
+                    while(findFunctionAndVarsOfClass(str_cpp, b->classname_,pos, *b)){}//连续读取代码中的类
                 }
             }
             if (!has_class_declare)
@@ -179,7 +178,7 @@ int CppParser::parseCppFile(SrcFileModel srcFile)
     return 0;
 }
 
-size_t CppParser::judge(string s)
+int CppParser::judge(string s)
 {
     if(s=="#include")
     {
@@ -301,7 +300,7 @@ void CppParser::R(string& str)
     
     do
     {
-        index = str.find("class\t");//消除,后面的换行
+        index = (int)str.find("class\t");//消除,后面的换行
         if(index != string::npos)
         {
             str.replace(index,6,"class ");
@@ -315,7 +314,7 @@ void CppParser::R(string& str)
     
     do
     {
-        index = str.find("friend\t");//消除,后面的换行
+        index = (int)str.find("friend\t");//消除,后面的换行
         if(index != string::npos)
         {
             str.replace(index,7,"friend ");
@@ -418,20 +417,20 @@ void CppParser::display(SrcFileModel fileModel)
 
     vector<string>::iterator b;
     size_t pos;
-    for(b = include.begin(); b!=include.end();++b)
+    for(b = include_.begin(); b!=include_.end();++b)
     {
         //include
     }
     vector<CppParser>::iterator i;
-    for(i = _classes.begin(); i!=_classes.end() ; ++i)
+    for(i = classes_.begin(); i!=classes_.end() ; ++i)
     {
         //类名
-        string classname = i->classname;
+        string classname = i->classname_;
         
 //        qDebug() << "类名：" << classname.c_str() << endl;
-        if(i->extends.size() != 0)
+        if(i->extends_.size() != 0)
         {
-            for(b = i->extends.begin(); b != i->extends.end(); ++b)
+            for(b = i->extends_.begin(); b != i->extends_.end(); ++b)
             {
                 pos = 0;
                 trim(*b);
@@ -442,7 +441,7 @@ void CppParser::display(SrcFileModel fileModel)
                 }
             }
         }
-        for(b = i->var.begin(); b != i->var.end(); ++b)
+        for(b = i->var_.begin(); b != i->var_.end(); ++b)
         {
             pos = 0;
             trim(*b);
@@ -464,7 +463,7 @@ void CppParser::display(SrcFileModel fileModel)
                 }
             }
         }
-        for(b = i->function.begin(); b != i->function.end(); ++b)
+        for(b = i->function_.begin(); b != i->function_.end(); ++b)
         {
             pos = 0;
             trim(*b);
@@ -492,7 +491,7 @@ void CppParser::display(SrcFileModel fileModel)
 int CppParser::findGlobalClassDeclares(string& str)
 {
     CppParser tempC;
-    tempC.classname = "GlobalClassDeclare";
+    tempC.classname_ = "GlobalClassDeclare";
     vector<string> vs = divideByTab(str);//根据制表符分解字符串
     size_t sem_index;//分号下标
     //根据分号来区分函数和变量
@@ -517,7 +516,7 @@ int CppParser::findGlobalClassDeclares(string& str)
                 string class_declare_str = cur_var + ";";
                 size_t index = str.find(class_declare_str);
 
-                tempC.var.push_back(cur_var);
+                tempC.var_.push_back(cur_var);
 
                 if (index != string::npos)
                 {
@@ -527,9 +526,9 @@ int CppParser::findGlobalClassDeclares(string& str)
         }
     }
 
-    _classes.push_back(tempC);
+    classes_.push_back(tempC);
 
-    if(tempC.var.size() > 0 || tempC.function.size() > 0)
+    if(tempC.var_.size() > 0 || tempC.function_.size() > 0)
     {
       return HAVEFOUND;
     }
@@ -542,7 +541,7 @@ int CppParser::findGlobalClassDeclares(string& str)
 int CppParser::findGlobalVarsAndFunctions(string& str)
 {
     CppParser tempC;
-    tempC.classname = "GlobalVarsAndFunctions";
+    tempC.classname_ = "GlobalVarsAndFunctions";
     size_t lBlock = str.find('{',0) ;// 找{
     size_t cur_index = lBlock;
     vector<size_t> vi = actionscope(str,cur_index);//获取函数和数组变量初始化等 { 和 } 的位置
@@ -550,29 +549,36 @@ int CppParser::findGlobalVarsAndFunctions(string& str)
     //排除所有作用域内的字符串
     for(vector<size_t>::iterator vit = vi.begin(); vit != vi.end(); vit += 2)
     {
-        size_t start_index = *vit+1;
-        size_t substr_index = *(vit+1)-*(vit)-1;
+        if (vit + 1 != vi.end())
+        {
+            size_t start_index = *vit + 1;
+            size_t substr_index = *(vit + 1) - *(vit)-1;
 
-        if (start_index > str.length() || start_index+substr_index > str.length())
+            if (start_index > str.length() || start_index + substr_index > str.length())
+            {
+                break;
+            }
+
+            temp += str.substr(start_index, substr_index);
+        }
+        else
         {
             break;
         }
-
-        temp += str.substr(start_index, substr_index);
     }
     vector<string> vs = divideByTab(temp);//根据制表符分解字符串
     size_t sem_index;//分号下标
     //根据分号来区分函数和变量
     for(vector<string>::iterator b = vs.begin(); b!=vs.end();++b)
     {
-        sem_index = b->find_last_of(';');
+        sem_index = (int)b->find_last_of(';');
         if( sem_index != string::npos)
         {
             string cur_var = b->substr(0,sem_index);
             cur_var = trim(cur_var);
             if (cur_var.length() > 2)
             {
-                tempC.var.push_back(cur_var);
+                tempC.var_.push_back(cur_var);
             }
         }
         else
@@ -580,14 +586,14 @@ int CppParser::findGlobalVarsAndFunctions(string& str)
             string cur_function_str = trim(*b);
             if (cur_function_str.length() > 2)
             {
-                tempC.function.push_back(cur_function_str);
+                tempC.function_.push_back(cur_function_str);
             }
         }
     }
 
-    _classes.push_back(tempC);
+    classes_.push_back(tempC);
 
-    if(tempC.var.size() > 0 || tempC.function.size() > 0)
+    if(tempC.var_.size() > 0 || tempC.function_.size() > 0)
     {
         return HAVEFOUND;
     }
@@ -602,7 +608,7 @@ int CppParser::findGlobalVarsAndFunctions(string& str)
  */
 int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
 {
-    size_t type = judge(s);
+    int type = judge(s);
     size_t fI,nI;//firstIndex,nextIndex
     string temp = "";
     switch(type)
@@ -625,7 +631,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                 //除去多余的制表符和空格
 
                 if(type == INCLUDE){
-                    include.push_back(temp);
+                    include_.push_back(temp);
                 }
                 //pos位置为分号右边一位。
                 pos = nI + 1;
@@ -635,6 +641,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                 return NOTFOUND;
             }
         }
+            break;
         case CLASS:
         {
             fI = str.find(s,pos);//找到"class "
@@ -657,8 +664,8 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                         return NOTFOUND;
                     }
 
-                    theclass.classname = cn;
-                    theclass.extends = en;
+                    theclass.classname_ = cn;
+                    theclass.extends_ = en;
 
                     size_t cur_index = lBlock;//current_index
                     vector<size_t> vi = actionscope(str,cur_index);//获取函数和数组变量初始化等 { 和 } 的位置
@@ -688,7 +695,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                             cur_var = trim(cur_var);
                             if (cur_var.length() > 2)
                             {
-                                theclass.var.push_back(cur_var);
+                                theclass.var_.push_back(cur_var);
                             }
                         }
                         else
@@ -696,12 +703,12 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                             string cur_function_str = trim(*b);
                             if (cur_function_str.length() > 2 )
                             {
-                                theclass.function.push_back(cur_function_str);
+                                theclass.function_.push_back(cur_function_str);
                             }
                         }
                     }
 
-                    _classes.push_back(theclass);
+                    classes_.push_back(theclass);
                     pos = fI + 1;//下一个搜索位置从fI开始，因为可能会出现类里面嵌套类的情况
                     return HAVEFOUND;
                 }
@@ -711,7 +718,6 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                 return NOTFOUND;
             }
         }
-        break;
         case TEMPLATE_CLASS:
         {
             fI = str.find(s,pos);//找到"template"
@@ -728,8 +734,8 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                     const string cn = findClassName(classline,begin);//classname
                     vector<string>  en = findExtendsName(classline,begin);//extendsname
 
-                    theclass.classname = cn;
-                    theclass.extends = en;
+                    theclass.classname_ = cn;
+                    theclass.extends_ = en;
 
                     size_t cur_index = lBlock;//current_index
                     vector<size_t> vi = actionscope(str,cur_index);//获取函数和数组变量初始化等 { 和 } 的位置
@@ -759,7 +765,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                             cur_var = trim(cur_var);
                             if (cur_var.length() > 2)
                             {
-                                theclass.var.push_back(cur_var);
+                                theclass.var_.push_back(cur_var);
                             }
                         }
                         else
@@ -767,7 +773,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                             string cur_function_str = trim(*b);
                             if (cur_function_str.length() > 2)
                             {
-                                theclass.function.push_back(cur_function_str);
+                                theclass.function_.push_back(cur_function_str);
                             }
                         }
                     }
@@ -780,7 +786,7 @@ int CppParser::findSubStrAtPos(string& str,string s,size_t& pos)
                     }
                     else
                     {
-                        _classes.push_back(theclass);
+                        classes_.push_back(theclass);
                     }
                     pos = fI + 1;//下一个搜索位置从fI开始，因为可能会出现类里面嵌套类的情况
                     return HAVEFOUND;
@@ -826,14 +832,21 @@ int CppParser::findFunctionAndVarsOfClass(string& str,string s,size_t& pos,CppPa
         {
 //            qDebug() << "*vit is: " << *vit << endl;
             size_t start_index = *vit+1;
-            size_t substr_index = *(vit+1)-*(vit)-1;
-            
-            if (start_index > str.length() || start_index+substr_index > str.length())
+            if (vit + 1 != vi.end())
+            {
+                size_t substr_index = *(vit + 1) - *(vit)-1;
+
+                if (start_index > str.length() || start_index + substr_index > str.length())
+                {
+                    break;
+                }
+
+                temp += str.substr(start_index, substr_index);
+            }
+            else
             {
                 break;
             }
-            
-            temp += str.substr(start_index, substr_index);
         }
         D(temp,'#');//删除 # 号 和 \n 号之间的信息，包括#号，不包括\n号
         vector<string> vs = divideByTab(temp);//根据制表符分解字符串
@@ -842,12 +855,12 @@ int CppParser::findFunctionAndVarsOfClass(string& str,string s,size_t& pos,CppPa
             string cur_function_str = trim(*b);
             if (cur_function_str.length() > 2 && cur_function_str.find(s+"::") != string::npos && is_str_contain_space(cur_function_str))
             {
-                theclass.function.push_back(cur_function_str);
+                theclass.function_.push_back(cur_function_str);
             }
         }
         
-        sort(theclass.function.begin(),theclass.function.end());
-        theclass.function.erase(unique(theclass.function.begin(), theclass.function.end()), theclass.function.end());
+        sort(theclass.function_.begin(),theclass.function_.end());
+        theclass.function_.erase(unique(theclass.function_.begin(), theclass.function_.end()), theclass.function_.end());
         
         pos = fI + 1;//下一个搜索位置从fI开始，因为可能会出现类里面嵌套类的情况
         return HAVEFOUND;

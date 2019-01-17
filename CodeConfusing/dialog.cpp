@@ -13,8 +13,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#ifndef WIN32
 #include <dirent.h>
 #include <unistd.h>
+#else
+#include <QDir>
+#endif
 #include <vector>
 
 #include "stringutil.h"
@@ -31,55 +35,45 @@
 
 using namespace std;
 
-void Dialog::readFileList(const char *basePath)
+void Dialog::readFileList(const char *path)
 {
-    DIR *dir;
-    struct dirent *ptr;
+    //判断路径是否存在
+   QDir dir(path);
+   if(!dir.exists())
+   {
+      return;
+   }
+   dir.setFilter(QDir::Files | QDir::NoSymLinks);
+   QFileInfoList list =dir.entryInfoList();
 
-    if ((dir=opendir(basePath)) == nullptr)
-    {
-        perror("Open dir error...");
-        return;
-    }
+   int file_count =list.count();
+   if(file_count <=0)
+   {
+      return;
+   }
 
-    while ((ptr=readdir(dir)) != nullptr)
-    {
-        if(strcmp(ptr->d_name,".")==0 || strcmp(ptr->d_name,"..")==0)    ///current dir OR parrent dir
-        {
-            continue;
-        }
-        else if(ptr->d_type == 8)    ///file
-        {
-            string filePath = basePath;
-            string fileName = ptr->d_name;
-            filePath = filePath + "/" + fileName;
-            SrcFileModel fileModel;
-            fileModel.fileName = fileName;
-            fileModel.filePath = filePath;
-            fileModel.isParsed = false;
-            fileList.push_back(fileModel);
-        }
-        else if(ptr->d_type == 10)    ///link file
-        {
-//            string filePath = basePath;
-//            string fileName = ptr->d_name;
-//            filePath = filePath + "/" + fileName;
-//            SrcFileModel fileModel;
-//            fileModel.fileName = fileName;
-//            fileModel.filePath = filePath;
-//            fileModel.isParsed = false;
-//            fileList.push_back(fileModel);
-        }
-        else if(ptr->d_type == 4)    ///dir
-        {
-            string filePath = basePath;
-            string fileName = ptr->d_name;
-            filePath = filePath + "/" + fileName;
-            readFileList(filePath.c_str());
-        }
-    }
-    closedir(dir);
-    return;
+   for(int i=0; i < list.count(); i++)
+   {
+      QFileInfo file_info = list.at(i);
+      QString suffix = file_info.suffix();
+      //if(QString::compare(suffix, QString("png"),Qt::CaseInsensitive) == 0)
+      {
+          QString absolute_file_path= file_info.absoluteFilePath();
+          string filePath = path;
+          string fileName = file_info.fileName().toStdString();
+          filePath = filePath + "/" + fileName;
+          SrcFileModel fileModel;
+          fileModel.fileName = fileName;
+          fileModel.filePath = filePath;
+          fileModel.isParsed = false;
+
+         fileList.push_back(fileModel);
+      }
+      if (file_info.isDir())
+      {
+        readFileList(file_info.filePath().toStdString().c_str());
+      }
+   }
 }
 
 Dialog::Dialog(QString file_storage, 

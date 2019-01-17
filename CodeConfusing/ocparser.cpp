@@ -448,7 +448,7 @@ void OCParser::display(SrcFileModel fileModel)
 
             }
         }
-        for(b = i->function.begin(); b != i->function.end(); ++b)
+        for(b = i->function_.begin(); b != i->function_.end(); ++b)
         {
             pos = 0;
             trim(*b);
@@ -550,7 +550,7 @@ int OCParser::find(string& str,string s,size_t& pos){
                     theclass.extends = en;
                     theclass.delegates = dn;
                     theclass.properties = map["properties"];
-                    theclass.function = map["functions"];
+                    theclass.function_ = map["functions"];
 
                     _oc.push_back(theclass);
                     pos = fI + 1;//下一个搜索位置从fI开始，因为可能会出现类里面嵌套类的情况
@@ -609,14 +609,14 @@ int OCParser::find(string& str,string s,size_t& pos){
                             D(functionStr,'#');
                             if (functionStr.length() > 2 && functionStr.find("@") == string::npos)
                             {
-                                theclass.function.push_back(*b);
+                                theclass.function_.push_back(*b);
                             }
                         }
                     }
                     sort(theclass.var.begin(),theclass.var.end());
                     theclass.var.erase(unique(theclass.var.begin(), theclass.var.end()), theclass.var.end());
-                    sort(theclass.function.begin(),theclass.function.end());
-                    theclass.function.erase(unique(theclass.function.begin(), theclass.function.end()), theclass.function.end());
+                    sort(theclass.function_.begin(),theclass.function_.end());
+                    theclass.function_.erase(unique(theclass.function_.begin(), theclass.function_.end()), theclass.function_.end());
                     _oc.push_back(theclass);
                     pos = fI + 1;//下一个搜索位置从fI开始，因为可能会出现类里面嵌套类的情况
                     return OC_HAVEFOUND;

@@ -37,7 +37,7 @@ public:
     vector<string> delegates;//类的delegates
     vector<string> var;//类的变量
     vector<string> properties;//类的属性
-    vector<string> function;//类的函数
+    vector<string> function_;//类的函数
 
     vector<string> oc_include;//include集合
     vector<string> oc_import;//import集合

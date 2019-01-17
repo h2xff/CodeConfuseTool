@@ -52,7 +52,7 @@ void GarbageCodeTool::modifyContentInFile(const char *fileName, string content)
 
 int GarbageCodeTool::insertGarbageCode(SrcFileModel srcFile, string garbageCode)
 {
-    modifyContentInFile(srcFile.filePath.c_str(), garbageCode);
+    modifyContentInFile(srcFile.cppFilePath.c_str(), garbageCode);
     
     return 0;
 }

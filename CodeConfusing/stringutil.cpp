@@ -23,8 +23,10 @@ inline string& StringUtil::ltrim(string &str)
 
 inline string& StringUtil::rtrim(string &str)
 {
+    auto local = setlocale(LC_ALL, "chs");
     string::reverse_iterator p = find_if(str.rbegin(), str.rend(), not1(ptr_fun<int , int>(isspace)));
     str.erase(p.base(), str.end());
+    setlocale(LC_ALL, local);
     return str;
 }
 
